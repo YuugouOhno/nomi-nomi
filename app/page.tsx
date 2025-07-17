@@ -1,51 +1,38 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { generateClient } from "aws-amplify/data";
-import type { Schema } from "@/amplify/data/resource";
-import "./../app/app.css";
-import { Amplify } from "aws-amplify";
-import outputs from "@/amplify_outputs.json";
-import "@aws-amplify/ui-react/styles.css";
-
-Amplify.configure(outputs);
-
-const client = generateClient<Schema>();
+import { SearchBox } from '@/app/components/SearchBox'
+import { SearchResults } from '@/app/components/SearchResults'
+import { useSearch } from '@/app/hooks/useSearch'
+import { Icon } from '@/app/components/ui/Icon'
 
 export default function App() {
-  const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
-
-  function listTodos() {
-    client.models.Todo.observeQuery().subscribe({
-      next: (data) => setTodos([...data.items]),
-    });
-  }
-
-  useEffect(() => {
-    listTodos();
-  }, []);
-
-  function createTodo() {
-    client.models.Todo.create({
-      content: window.prompt("Todo content"),
-    });
-  }
+  const { searchResults, isLoading, error, search } = useSearch()
 
   return (
-    <main>
-      <h1>My todos</h1>
-      <button onClick={createTodo}>+ new</button>
-      <ul>
-        {todos.map((todo) => (
-          <li key={todo.id}>{todo.content}</li>
-        ))}
-      </ul>
-      <div>
-        🥳 App successfully hosted. Try creating a new todo.
-        <br />
-        <a href="https://docs.amplify.aws/nextjs/start/quickstart/nextjs-app-router-client-components/">
-          Review next steps of this tutorial.
-        </a>
+    <main className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center mb-4">
+            <Icon name="BuildingStorefrontIcon" size="xl" className="text-blue-600 mr-2" />
+            <h1 className="text-3xl font-bold text-gray-900">居酒屋レビュー検索</h1>
+          </div>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            自然な言葉で居酒屋を検索できます。「新宿の個室がある居酒屋」「安くて美味しい焼き鳥屋」など、
+            お好みの条件を入力してください。
+          </p>
+        </div>
+
+        <div className="mb-8">
+          <SearchBox onSearch={search} isLoading={isLoading} />
+        </div>
+
+        <div className="max-w-4xl mx-auto">
+          <SearchResults
+            results={searchResults?.results || []}
+            isLoading={isLoading}
+            error={error}
+          />
+        </div>
       </div>
     </main>
   );
