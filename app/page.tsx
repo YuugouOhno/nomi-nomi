@@ -1,16 +1,22 @@
 "use client";
 
-import { Amplify } from 'aws-amplify'
-import outputs from '@/amplify_outputs.json'
-import IzakayaChat from '@/app/components/IzakayaChat'
-import '@aws-amplify/ui-react/styles.css'
+import { useState, useEffect } from "react";
+import { generateClient } from "aws-amplify/data";
+import type { Schema } from "@/amplify/data/resource";
+import "./../app/app.css";
+import { Amplify } from "aws-amplify";
+import outputs from "@/amplify_outputs.json";
+import "@aws-amplify/ui-react/styles.css";
 
-Amplify.configure(outputs)
+Amplify.configure(outputs);
+
+const client = generateClient<Schema>();
 
 export default function App() {
+
   return (
-    <main className="h-screen bg-gray-50">
-      <IzakayaChat />
+    <main>
+      hello world
     </main>
   );
 }
