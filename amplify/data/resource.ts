@@ -64,13 +64,24 @@ const schema = a.schema({
     }))
     .authorization((allow) => [allow.publicApiKey()]),
 
-  // Note: conversation routes require owner-based authorization
-  // searchChat: a
-  //   .conversation({
-  //     aiModel: a.ai.model('Claude 3.5 Haiku'),
-  //     systemPrompt: `あなたは居酒屋検索の専門アシスタントです。`
-  //   })
-  //   .authorization((allow) => [allow.owner()]),
+  izakayaChat: a
+    .conversation({
+      aiModel: a.ai.model('Claude 3.5 Haiku'),
+      systemPrompt: `あなたは居酒屋検索の専門アシスタントです。
+ユーザーの要望に基づいて、適切な居酒屋を提案し、その理由を説明してください。
+
+以下の情報を考慮してください：
+- 料理の種類（焼き鳥、刺身、串カツ、もつ鍋など）
+- 価格帯（安い、リーズナブル、高級など）
+- 個室の有無
+- 立地（新宿、渋谷、駅近など）
+- 雰囲気（デート、賑やか、静かなど）
+- 評価・人気度
+
+回答は分かりやすく、親しみやすい口調で行ってください。
+具体的な居酒屋名、住所、特徴を含めて提案してください。`
+    })
+    .authorization((allow) => allow.owner()),
 });
 
 export type Schema = ClientSchema<typeof schema>;
