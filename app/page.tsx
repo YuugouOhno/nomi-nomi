@@ -7,6 +7,7 @@ import { Amplify } from "aws-amplify";
 import outputs from "@/amplify_outputs.json";
 import "@aws-amplify/ui-react/styles.css";
 
+import Link from "next/link";
 import { SearchBox } from "./components/SearchBox";
 import { SearchResults } from "./components/SearchResults";
 import { LoadingSpinner } from "./components/LoadingSpinner";
@@ -71,7 +72,13 @@ export default function App() {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">nomi-nomi</h1>
-          <p className="text-xl text-gray-600">AI駆動型レストラン検索</p>
+          <p className="text-xl text-gray-600 mb-6">AI駆動型レストラン検索</p>
+          <Link 
+            href="/restaurants"
+            className="inline-block bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+          >
+            レストラン一覧を見る
+          </Link>
         </div>
 
         <div className="mb-8">
