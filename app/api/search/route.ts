@@ -42,20 +42,30 @@ export async function POST(request: NextRequest) {
 }
 
 async function extractKeywordsFromQuery(query: string): Promise<string[]> {
-  // TODO: 実際のLLMを使用してキーワードを抽出
-  // 現在はシンプルなキーワード抽出のモック実装
-  const keywords: string[] = []
-  
-  if (query.includes('個室')) keywords.push('個室')
-  if (query.includes('安い') || query.includes('リーズナブル')) keywords.push('安い')
-  if (query.includes('美味しい') || query.includes('おいしい')) keywords.push('美味しい')
-  if (query.includes('焼き鳥')) keywords.push('焼き鳥')
-  if (query.includes('刺身') || query.includes('魚')) keywords.push('刺身')
-  if (query.includes('新宿')) keywords.push('新宿')
-  if (query.includes('渋谷')) keywords.push('渋谷')
-  if (query.includes('駅近')) keywords.push('駅近')
-  
-  return keywords
+  try {
+    // TODO: 実際のAmplify AI機能を使用してキーワードを抽出
+    // 現在はAmplifyのAI機能の設定が必要なため、モック実装を継続
+    const keywords: string[] = []
+    
+    if (query.includes('個室')) keywords.push('個室')
+    if (query.includes('安い') || query.includes('リーズナブル')) keywords.push('安い')
+    if (query.includes('美味しい') || query.includes('おいしい')) keywords.push('美味しい')
+    if (query.includes('焼き鳥')) keywords.push('焼き鳥')
+    if (query.includes('刺身') || query.includes('魚')) keywords.push('刺身')
+    if (query.includes('新宿')) keywords.push('新宿')
+    if (query.includes('渋谷')) keywords.push('渋谷')
+    if (query.includes('駅近')) keywords.push('駅近')
+    if (query.includes('うまい') || query.includes('絶品')) keywords.push('美味しい')
+    if (query.includes('デート')) keywords.push('デート')
+    if (query.includes('飲み放題')) keywords.push('飲み放題')
+    if (query.includes('串カツ')) keywords.push('串カツ')
+    if (query.includes('もつ鍋')) keywords.push('もつ鍋')
+    
+    return keywords
+  } catch (error) {
+    console.error('Keyword extraction error:', error)
+    return []
+  }
 }
 
 async function extractConditionsFromQuery(query: string): Promise<{
@@ -63,26 +73,31 @@ async function extractConditionsFromQuery(query: string): Promise<{
   hasPrivateRoom?: boolean
   minRating?: number
 }> {
-  // TODO: 実際のLLMを使用して条件を抽出
-  const conditions: any = {}
-  
-  if (query.includes('個室')) {
-    conditions.hasPrivateRoom = true
+  try {
+    // TODO: 実際のAmplify AI機能を使用して条件を抽出
+    const conditions: any = {}
+    
+    if (query.includes('個室')) {
+      conditions.hasPrivateRoom = true
+    }
+    
+    if (query.includes('安い') || query.includes('リーズナブル') || query.includes('コスパ')) {
+      conditions.priceRange = 'LOW'
+    } else if (query.includes('高級') || query.includes('高い') || query.includes('上質')) {
+      conditions.priceRange = 'HIGH'
+    } else {
+      conditions.priceRange = 'MEDIUM'
+    }
+    
+    if (query.includes('評価の高い') || query.includes('人気') || query.includes('おすすめ')) {
+      conditions.minRating = 4.0
+    }
+    
+    return conditions
+  } catch (error) {
+    console.error('Condition extraction error:', error)
+    return {}
   }
-  
-  if (query.includes('安い') || query.includes('リーズナブル')) {
-    conditions.priceRange = 'LOW'
-  } else if (query.includes('高級') || query.includes('高い')) {
-    conditions.priceRange = 'HIGH'
-  } else {
-    conditions.priceRange = 'MEDIUM'
-  }
-  
-  if (query.includes('評価の高い') || query.includes('人気')) {
-    conditions.minRating = 4.0
-  }
-  
-  return conditions
 }
 
 async function searchIzakayas(keywords: string[], conditions: any): Promise<SearchResult[]> {
@@ -127,6 +142,71 @@ async function searchIzakayas(keywords: string[], conditions: any): Promise<Sear
       googlePlaceId: 'place_3',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
+    },
+    {
+      id: '4',
+      name: '串カツ酒場 だるま',
+      address: '東京都新宿区新宿4-2-10',
+      phone: '03-4567-8901',
+      priceRange: 'LOW',
+      hasPrivateRoom: false,
+      rating: 4.3,
+      totalReviews: 142,
+      googlePlaceId: 'place_4',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: '5',
+      name: '渋谷個室和食 雅',
+      address: '東京都渋谷区渋谷1-15-5',
+      phone: '03-5678-9012',
+      priceRange: 'HIGH',
+      hasPrivateRoom: true,
+      rating: 4.6,
+      totalReviews: 98,
+      googlePlaceId: 'place_5',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: '6',
+      name: 'もつ鍋専門店 博多',
+      address: '東京都新宿区歌舞伎町1-5-3',
+      phone: '03-6789-0123',
+      priceRange: 'MEDIUM',
+      hasPrivateRoom: false,
+      rating: 4.4,
+      totalReviews: 167,
+      googlePlaceId: 'place_6',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: '7',
+      name: '駅近居酒屋 乾杯',
+      address: '東京都新宿区新宿3-38-1',
+      phone: '03-7890-1234',
+      priceRange: 'LOW',
+      hasPrivateRoom: false,
+      rating: 3.8,
+      totalReviews: 234,
+      googlePlaceId: 'place_7',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: '8',
+      name: 'デート個室 恋々',
+      address: '東京都渋谷区神南1-20-7',
+      phone: '03-8901-2345',
+      priceRange: 'HIGH',
+      hasPrivateRoom: true,
+      rating: 4.7,
+      totalReviews: 78,
+      googlePlaceId: 'place_8',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     }
   ]
   
@@ -153,6 +233,11 @@ async function searchIzakayas(keywords: string[], conditions: any): Promise<Sear
       if (keyword === '焼き鳥' && izakaya.name.includes('焼き鳥')) return true
       if (keyword === '刺身' && izakaya.name.includes('魚')) return true
       if (keyword === '新宿' && izakaya.address.includes('新宿')) return true
+      if (keyword === '渋谷' && izakaya.address.includes('渋谷')) return true
+      if (keyword === '串カツ' && izakaya.name.includes('串カツ')) return true
+      if (keyword === 'もつ鍋' && izakaya.name.includes('もつ鍋')) return true
+      if (keyword === '駅近' && izakaya.name.includes('駅近')) return true
+      if (keyword === 'デート' && izakaya.name.includes('デート')) return true
       return false
     })
     
@@ -186,6 +271,11 @@ function calculateRelevanceScore(izakaya: Izakaya, keywords: string[], condition
     if (keyword === '焼き鳥' && izakaya.name.includes('焼き鳥')) score += 25
     if (keyword === '刺身' && izakaya.name.includes('魚')) score += 25
     if (keyword === '新宿' && izakaya.address.includes('新宿')) score += 10
+    if (keyword === '渋谷' && izakaya.address.includes('渋谷')) score += 10
+    if (keyword === '串カツ' && izakaya.name.includes('串カツ')) score += 25
+    if (keyword === 'もつ鍋' && izakaya.name.includes('もつ鍋')) score += 25
+    if (keyword === '駅近' && izakaya.name.includes('駅近')) score += 15
+    if (keyword === 'デート' && izakaya.name.includes('デート')) score += 20
   })
   
   // 条件マッチング
@@ -219,7 +309,29 @@ function generateExplanation(izakaya: Izakaya, matchedKeywords: string[], condit
     explanations.push('新宿エリアにあります')
   }
   
-  if (izakaya.rating >= 4.0) {
+  if (matchedKeywords.includes('渋谷')) {
+    explanations.push('渋谷エリアにあります')
+  }
+  
+  if (matchedKeywords.includes('串カツ')) {
+    explanations.push('串カツが名物の居酒屋です')
+  }
+  
+  if (matchedKeywords.includes('もつ鍋')) {
+    explanations.push('もつ鍋が楽しめる専門店です')
+  }
+  
+  if (matchedKeywords.includes('駅近')) {
+    explanations.push('駅から近くアクセス良好です')
+  }
+  
+  if (matchedKeywords.includes('デート')) {
+    explanations.push('デートにぴったりな雰囲気です')
+  }
+  
+  if (izakaya.rating >= 4.5) {
+    explanations.push(`非常に高評価（${izakaya.rating}★）の人気店です`)
+  } else if (izakaya.rating >= 4.0) {
     explanations.push(`高評価（${izakaya.rating}★）の人気店です`)
   }
   
