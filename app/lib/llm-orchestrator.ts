@@ -1,5 +1,12 @@
 import { invokeLLM } from './bedrock';
-import { filterRestaurants } from './seed-data';
+import { generateClient } from 'aws-amplify/data';
+import { Amplify } from 'aws-amplify';
+import type { Schema } from '@/amplify/data/resource';
+import outputs from '@/amplify_outputs.json';
+
+// Amplify設定
+Amplify.configure(outputs);
+const client = generateClient<Schema>();
 
 // LLM_A: クエリ分類の結果型
 export interface QueryClassificationResult {
@@ -214,21 +221,66 @@ export async function generateRecommendation(
   }
 }
 
-// データベース検索の関数（現在はシードデータを使用）
+// データベース検索の関数
 async function searchRestaurants(
   structuredParams: DatabaseQueryParams,
   keywordParams: SearchableKeywords
 ): Promise<any[]> {
-  // TODO: 実際のデータベース検索を実装
-  // 現在はシードデータを使用
-  const results = filterRestaurants({
-    area: structuredParams.area,
-    cuisine: structuredParams.cuisine,
-    priceCategory: structuredParams.priceCategory,
-    keywords: keywordParams.searchableKeywords
-  });
-
-  return results;
+  try {
+    // Amplify DataStoreから全レストランを取得
+    const response = await client.models.Restaurant.list();
+    let restaurants = response.data;
+    
+    // フィルタリング
+    if (structuredParams.area) {
+      restaurants = restaurants.filter(r => 
+        r.area.toLowerCase().includes(structuredParams.area!.toLowerCase())
+      );
+    }
+    
+    if (structuredParams.cuisine) {
+      restaurants = restaurants.filter(r => 
+        r.cuisine.toLowerCase().includes(structuredParams.cuisine!.toLowerCase())
+      );
+    }
+    
+    if (structuredParams.priceCategory) {
+      restaurants = restaurants.filter(r => 
+        r.priceRange === structuredParams.priceCategory
+      );
+    }
+    
+    // キーワード検索
+    if (keywordParams.searchableKeywords.length > 0) {
+      restaurants = restaurants.filter(r => {
+        const searchText = `${r.name} ${r.description} ${r.cuisine} ${r.features} ${r.ambience} ${r.keywords}`.toLowerCase();
+        return keywordParams.searchableKeywords.some(keyword => 
+          searchText.includes(keyword.toLowerCase())
+        );
+      });
+    }
+    
+    // 結果を整形して返す
+    return restaurants.slice(0, 10).map(restaurant => ({
+      id: restaurant.id,
+      name: restaurant.name,
+      description: restaurant.description || '',
+      address: restaurant.address,
+      area: restaurant.area,
+      cuisine: restaurant.cuisine,
+      features: restaurant.features ? restaurant.features.split(',') : [],
+      ambience: restaurant.ambience,
+      rating: restaurant.rating || 0,
+      priceRange: restaurant.priceRange || '¥¥',
+      openingHours: restaurant.openingHours || '',
+      reservationRequired: restaurant.reservationRequired || false,
+      images: restaurant.images || [],
+      keywords: restaurant.keywords || ''
+    }));
+  } catch (error) {
+    console.error('Database search error:', error);
+    return [];
+  }
 }
 
 // メインのLLMオーケストレーター

@@ -10,12 +10,14 @@ interface Restaurant {
   description: string;
   address: string;
   area: string;
-  cuisine: string;
+  cuisine: string | string[];
   features: string[];
-  ambience: string;
-  rating: number;
-  priceRange: string;
-  openingHours: string;
+  ambience: string | string[];
+  rating?: number;
+  ratingAverage?: number;
+  priceRange?: string;
+  priceCategory?: string;
+  openingHours: string | Record<string, { open: string; close: string }>;
 }
 
 export default function RestaurantsPage() {
@@ -97,19 +99,27 @@ export default function RestaurantsPage() {
                   </div>
                   <div className="flex items-center text-gray-700">
                     <span className="font-medium">料理:</span>
-                    <span className="ml-2">{restaurant.cuisine}</span>
+                    <span className="ml-2">
+                      {Array.isArray(restaurant.cuisine) 
+                        ? restaurant.cuisine.join('、') 
+                        : restaurant.cuisine}
+                    </span>
                   </div>
                   <div className="flex items-center text-gray-700">
                     <span className="font-medium">価格帯:</span>
-                    <span className="ml-2">{restaurant.priceRange}</span>
+                    <span className="ml-2">{restaurant.priceRange || restaurant.priceCategory || '¥¥'}</span>
                   </div>
                   <div className="flex items-center text-gray-700">
                     <span className="font-medium">評価:</span>
-                    <span className="ml-2">{restaurant.rating}/5</span>
+                    <span className="ml-2">{restaurant.rating || restaurant.ratingAverage || 0}/5</span>
                   </div>
                   <div className="flex items-center text-gray-700">
                     <span className="font-medium">営業時間:</span>
-                    <span className="ml-2">{restaurant.openingHours}</span>
+                    <span className="ml-2">
+                      {typeof restaurant.openingHours === 'string' 
+                        ? restaurant.openingHours 
+                        : '月-木 17:00-23:00'}
+                    </span>
                   </div>
                 </div>
 
@@ -131,7 +141,11 @@ export default function RestaurantsPage() {
 
                 <div className="mt-4 text-sm text-gray-600">
                   <span className="font-medium">雰囲気:</span>
-                  <span className="ml-2">{restaurant.ambience}</span>
+                  <span className="ml-2">
+                    {Array.isArray(restaurant.ambience) 
+                      ? restaurant.ambience.join('、') 
+                      : restaurant.ambience}
+                  </span>
                 </div>
               </div>
             </div>
