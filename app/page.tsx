@@ -10,7 +10,7 @@ import Link from "next/link";
 // ==================================================================
 // 開発用の設定
 // trueにすると、APIを叩かずにダミーデータを表示します
-const useDummyData = false;
+const useDummyData = true;
 // ==================================================================
 
 const dummyRestaurants: Restaurant[] = [
@@ -18,31 +18,49 @@ const dummyRestaurants: Restaurant[] = [
     id: "1",
     name: "渋谷シーフード天国",
     description: "新鮮な海の幸をふんだんに使った料理が自慢。特に、日替わりのカルパッチョは絶品です。",
+    address: "東京都渋谷区",
     area: "渋谷",
     cuisine: ["シーフード", "イタリアン"],
     priceCategory: "¥¥¥",
     ratingAverage: 4.5,
     images: ["/images/placeholder-1.jpg"],
+    features: ["個室あり"],
+    ambience: ["カジュアル"],
+    keywords: ["シーフード", "イタリアン", "渋谷"],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: "2",
     name: "新宿モダン和食 KAI",
     description: "伝統的な和食に現代的なアレンジを加えた創作料理が楽しめます。落ち着いた雰囲気でデートに最適。",
+    address: "東京都新宿区",
     area: "新宿",
     cuisine: ["和食", "創作料理"],
     priceCategory: "¥¥¥¥",
     ratingAverage: 4.8,
     images: ["/images/placeholder-2.jpg"],
+    features: ["禁煙"],
+    ambience: ["落ち着いた"],
+    keywords: ["和食", "創作料理", "新宿"],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: "3",
     name: "銀座グリルマスター",
     description: "最高級の熟成肉を炭火でじっくりと焼き上げます。肉好きにはたまらない一軒。",
+    address: "東京都中央区銀座",
     area: "銀座",
     cuisine: ["ステーキ", "グリル"],
     priceCategory: "¥¥¥¥¥",
     ratingAverage: 4.7,
     images: ["/images/placeholder-3.jpg"],
+    features: ["カウンター席あり"],
+    ambience: ["高級感"],
+    keywords: ["ステーキ", "グリル", "銀座"],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
 ];
 
@@ -96,13 +114,10 @@ export default function Home() {
   };
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+    <div className="w-full">
       {/* --- 検索セクション --- */}
-      <section className="text-center py-12 md:py-16 bg-white rounded-lg shadow-md mb-8">
-        <div className="max-w-3xl mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-            AIが見つける、あなたにぴったりの一軒
-          </h2>
+      <section className="text-center py-12 md:py-16 bg-white rounded-lg shadow-md mb-8 ">
+        <div className="w-full px-4">
           <p className="text-gray-600 mb-8">
             「渋谷で個室のある居酒屋」のように、自由な言葉で話しかけてください。
           </p>

@@ -238,15 +238,25 @@ async function searchRestaurants(
       );
     }
     
-    if (structuredParams.cuisine) {
-      restaurants = restaurants.filter(r => 
-        r.cuisine.toLowerCase().includes(structuredParams.cuisine!.toLowerCase())
-      );
+    if (structuredParams.cuisine && structuredParams.cuisine.length > 0) {
+      restaurants = restaurants.filter(r => {
+        // r.cuisine が null/undefined でないこと、かつ配列であることを確認
+        if (!r.cuisine || !Array.isArray(r.cuisine)) {
+          return false;
+        }
+        // 検索条件の料理タイプ（structuredParams.cuisine）のいずれかが、
+        // レストランの料理タイプ（r.cuisine）のいずれかに含まれているかを確認
+        return structuredParams.cuisine!.some(searchCuisine =>
+          r.cuisine!.some(restaurantCuisine =>
+            restaurantCuisine!.toLowerCase().includes(searchCuisine.toLowerCase())
+          )
+        );
+      });
     }
     
     if (structuredParams.priceCategory) {
       restaurants = restaurants.filter(r => 
-        r.priceRange === structuredParams.priceCategory
+        r.priceCategory === structuredParams.priceCategory
       );
     }
     
@@ -268,12 +278,12 @@ async function searchRestaurants(
       address: restaurant.address,
       area: restaurant.area,
       cuisine: restaurant.cuisine,
-      features: restaurant.features ? restaurant.features.split(',') : [],
+      features: restaurant.features || [],
       ambience: restaurant.ambience,
-      rating: restaurant.rating || 0,
-      priceRange: restaurant.priceRange || '¥¥',
+      rating: restaurant.ratingAverage || 0,
+      priceCategory: restaurant.priceCategory || '¥¥',
       openingHours: restaurant.openingHours || '',
-      reservationRequired: restaurant.reservationRequired || false,
+      
       images: restaurant.images || [],
       keywords: restaurant.keywords || ''
     }));
