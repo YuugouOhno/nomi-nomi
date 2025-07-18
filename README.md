@@ -78,6 +78,11 @@ aws configure
 
 # Amplify CLIの設定（初回のみ）
 npx amplify configure
+
+または、ampx環境の場合
+aws configure sso
+して、以下のリンク先を参考に設定
+https://qiita.com/hapoon/items/ed48a99e2d6c8946756e
 ```
 
 #### 3. バックエンドの初期化
@@ -86,8 +91,13 @@ npx amplify configure
 # Amplifyバックエンドの初期化
 npx amplify init
 
+※clone時は不要だと思われる
+
 # バックエンドリソースをデプロイ
 npx amplify push
+
+または、ampx環境の場合
+npx ampx sandbox --profile takaki
 ```
 
 #### 4. 環境変数の設定

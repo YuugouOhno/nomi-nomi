@@ -1,76 +1,40 @@
-'use client';
+import { Restaurant } from "../types";
+import { Card, CardContent, CardHeader } from "./ui/Card";
 
-import { Restaurant } from '@/app/types';
-import { Card, CardContent, CardHeader } from './ui/Card';
+export function SearchResults({ results }: { results: Restaurant[] }) {
+  if (!results || results.length === 0) {
+    return null;
+  }
 
-interface SearchResultsProps {
-  message: string;
-  restaurants: Restaurant[];
-}
-
-export function SearchResults({ message, restaurants }: SearchResultsProps) {
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* 推薦メッセージ */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-blue-900 mb-2">おすすめ</h2>
-        <p className="text-blue-800 leading-relaxed">{message}</p>
-      </div>
-
-      {/* レストラン一覧 */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {restaurants.map((restaurant) => (
-          <RestaurantCard key={restaurant.id} restaurant={restaurant} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function RestaurantCard({ restaurant }: { restaurant: Restaurant }) {
-  return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader>
-        <h3 className="text-lg font-semibold text-gray-900">{restaurant.name}</h3>
-        <p className="text-sm text-gray-600">{restaurant.area}</p>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {restaurant.description && (
-            <p className="text-gray-700 text-sm">{restaurant.description}</p>
-          )}
-          
-          <div className="flex flex-wrap gap-2">
-            {restaurant.cuisine.map((cuisine) => (
-              <span
-                key={cuisine}
-                className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
-              >
-                {cuisine}
-              </span>
-            ))}
-          </div>
-
-          <div className="flex justify-between items-center text-sm text-gray-600">
-            <span>{restaurant.address}</span>
-            {restaurant.ratingAverage && (
-              <div className="flex items-center">
-                <span className="text-yellow-500">★</span>
-                <span className="ml-1">{restaurant.ratingAverage.toFixed(1)}</span>
-                {restaurant.ratingCount && (
-                  <span className="ml-1">({restaurant.ratingCount})</span>
-                )}
-              </div>
-            )}
-          </div>
-
-          {restaurant.priceCategory && (
-            <div className="text-sm text-gray-600">
-              価格帯: {restaurant.priceCategory}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      {results.map((restaurant) => (
+        <Card key={restaurant.id} className="overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 ease-in-out shadow-lg hover:shadow-xl flex flex-col bg-white">
+          <CardHeader className="p-0 border-b-0">
+            <img 
+              src={restaurant.images?.[0] || "/images/placeholder-1.jpg"} 
+              alt={restaurant.name} 
+              className="w-full h-48 object-cover"
+              onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/400x300?text=Image+Not+Found'; }}
+            />
+          </CardHeader>
+          <CardContent className="p-4 flex flex-col flex-grow">
+            <h3 className="text-xl font-bold mb-2 text-gray-900">{restaurant.name}</h3>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {restaurant.area && <span className="bg-teal-100 text-teal-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">{restaurant.area}</span>}
+              {restaurant.cuisine?.[0] && <span className="bg-pink-100 text-pink-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">{restaurant.cuisine[0]}</span>}
+              {restaurant.priceCategory && <span className="bg-gray-200 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">{restaurant.priceCategory}</span>}
             </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            <p className="text-gray-600 text-sm mb-4 flex-grow">
+              {restaurant.description ? `${restaurant.description.substring(0, 80)}...` : 'お店の説明がありません。'}
+            </p>
+            <div className="flex justify-between items-center text-sm text-gray-700 mt-auto pt-4 border-t border-gray-100">
+              <span className="font-bold">{restaurant.ratingAverage ? `⭐ ${restaurant.ratingAverage}` : '評価なし'}</span>
+              <a href="#" className="text-blue-600 hover:underline font-semibold">詳細を見る</a>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }

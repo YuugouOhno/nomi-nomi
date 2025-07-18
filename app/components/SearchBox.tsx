@@ -1,46 +1,38 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Input } from './ui/Input';
-import { Button } from './ui/Button';
+import { useState } from "react";
 
 interface SearchBoxProps {
   onSearch: (query: string) => void;
-  loading?: boolean;
+  isLoading: boolean;
 }
 
-export function SearchBox({ onSearch, loading = false }: SearchBoxProps) {
-  const [query, setQuery] = useState('');
+export function SearchBox({ onSearch, isLoading }: SearchBoxProps) {
+  const [query, setQuery] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (query.trim()) {
-      onSearch(query.trim());
-    }
+    if (!query.trim() || isLoading) return;
+    onSearch(query);
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <div className="flex-1">
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="例：渋谷にある海鮮が美味しい居酒屋教えて"
-            className="text-lg py-3 px-4 h-12"
-            disabled={loading}
-          />
-        </div>
-        <Button
-          type="submit"
-          size="lg"
-          loading={loading}
-          disabled={!query.trim() || loading}
-          className="h-12 px-8"
-        >
-          検索
-        </Button>
-      </form>
-    </div>
+    <form onSubmit={handleSubmit} className="flex items-center gap-2">
+      <input
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="例: 銀座で寿司、個室あり"
+        className="flex-grow px-4 py-3 text-base md:text-lg border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200 shadow-sm"
+        disabled={isLoading}
+      />
+      <button 
+        type="submit"
+        className="px-6 md:px-8 py-3 text-base md:text-lg font-semibold text-white bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 shadow-sm"
+        disabled={isLoading}
+      >
+        {isLoading ? "検索中..." : "検索"}
+      </button>
+    </form>
   );
 }
