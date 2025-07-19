@@ -22,12 +22,12 @@ export async function GET() {
       address: restaurant.address,
       area: restaurant.area,
       cuisine: restaurant.cuisine,
-      features: restaurant.features ? restaurant.features.split(',') : [],
+      features: restaurant.features || [],
       ambience: restaurant.ambience,
-      rating: restaurant.rating || 0,
-      priceRange: restaurant.priceRange || '¥¥',
+      rating: restaurant.ratingAverage || 0,
+      priceCategory: restaurant.priceCategory || '¥¥',
       openingHours: restaurant.openingHours || '',
-      reservationRequired: restaurant.reservationRequired || false,
+      
       images: restaurant.images || [],
       keywords: restaurant.keywords || ''
     }));
