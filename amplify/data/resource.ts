@@ -38,7 +38,7 @@ const schema = a.schema({
   
   Keyword: a
     .model({
-      id: a.id(),
+      id: a.id().required(),
       keyword: a.string().required(),
       restaurants: a.hasMany("KeywordRestaurant", "keywordId"),
     })
