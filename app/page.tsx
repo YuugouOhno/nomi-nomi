@@ -23,7 +23,7 @@ const dummyRestaurants: Restaurant[] = [
     cuisine: ["シーフード", "イタリアン"],
     priceCategory: "¥¥¥",
     ratingAverage: 4.5,
-    images: ["/images/placeholder-1.jpg"],
+    images: ["/nomi-nomi.png"],
     features: ["個室あり"],
     ambience: ["カジュアル"],
     keywords: ["シーフード", "イタリアン", "渋谷"],
@@ -39,7 +39,7 @@ const dummyRestaurants: Restaurant[] = [
     cuisine: ["和食", "創作料理"],
     priceCategory: "¥¥¥¥",
     ratingAverage: 4.8,
-    images: ["/images/placeholder-2.jpg"],
+    images: ["/nomi-nomi.png"],
     features: ["禁煙"],
     ambience: ["落ち着いた"],
     keywords: ["和食", "創作料理", "新宿"],
@@ -55,7 +55,7 @@ const dummyRestaurants: Restaurant[] = [
     cuisine: ["ステーキ", "グリル"],
     priceCategory: "¥¥¥¥¥",
     ratingAverage: 4.7,
-    images: ["/images/placeholder-3.jpg"],
+    images: ["/nomi-nomi.png"],
     features: ["カウンター席あり"],
     ambience: ["高級感"],
     keywords: ["ステーキ", "グリル", "銀座"],
@@ -89,6 +89,7 @@ export default function Home() {
       }, 1500); // 1.5秒の遅延をシミュレート
     } else {
       // --- 実際のAPIを呼び出す場合 ---
+      console.log("/api/searchの呼び出し")
       try {
         const response = await fetch("/api/search", {
           method: "POST",
@@ -106,7 +107,9 @@ export default function Home() {
         // 本来はIDを元にレストラン情報を取得する処理が必要
         setResults(data.restaurants);
       } catch (e: any) {
-        setError(e.message);
+        console.error('検索エラー:', e);
+        const errorMessage = e.message || "検索に失敗しました。もう一度お試しください。";
+        setError(errorMessage);
       } finally {
         setIsLoading(false);
       }

@@ -13,10 +13,9 @@ export function SearchResults({ results }: { results: Restaurant[] }) {
           <Card className="overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 ease-in-out shadow-lg hover:shadow-xl flex flex-col bg-white h-full">
             <CardHeader className="p-0 border-b-0">
               <img 
-                src={restaurant.images?.[0] || "/images/placeholder-1.jpg"} 
+                src={restaurant.images?.[0] || "/no-image.png"} 
                 alt={restaurant.name} 
                 className="w-full h-48 object-cover"
-                onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/400x300?text=Image+Not+Found'; }}
               />
             </CardHeader>
             <CardContent className="p-4 flex flex-col flex-grow">
