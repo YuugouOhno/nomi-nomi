@@ -6,10 +6,18 @@ import Markdown from "react-markdown";
 import { 
   MultiLLMService, 
   MultiLLMConversationManager, 
-  MultiLLMMessage 
+  MultiLLMMessage,
+  searchRestaurantsIntegrated,
+  LLMAResponse,
+  LLMBResponse
 } from "@/app/lib/multi-llm-service";
 
-type LLMType = "master" | "restaurant" | "trip" | "food";
+type LLMType = "integrated" | "llmA" | "llmB" | "llmC" | "restaurant_search";
+
+interface RestaurantSearchResult {
+  restaurants: any[];
+  llmCResponse?: string;
+}
 
 export const AIConversationLayout = ({ id }: { id?: string }) => {
   const { tokens } = useTheme();
@@ -17,7 +25,8 @@ export const AIConversationLayout = ({ id }: { id?: string }) => {
   const [messages, setMessages] = useState<MultiLLMMessage[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedLLM, setSelectedLLM] = useState<LLMType>("master");
+  const [selectedLLM, setSelectedLLM] = useState<LLMType>("restaurant_search");
+  const [searchResults, setSearchResults] = useState<RestaurantSearchResult | null>(null);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
@@ -29,38 +38,87 @@ export const AIConversationLayout = ({ id }: { id?: string }) => {
     try {
       let response;
 
-      if (selectedLLM === "master") {
-        // マスターオーケストレーターとの会話（会話履歴を自動管理）
-        const assistantMessage = await conversationManager.sendMessageToMaster(userInput);
-        setMessages(conversationManager.getMessages());
-      } else {
-        // 専門LLMとの直接会話
-        conversationManager.addMessage("user", userInput);
+      // ユーザーメッセージを追加
+      conversationManager.addMessage("user", userInput);
 
-        switch (selectedLLM) {
-          case "restaurant":
-            response = await MultiLLMService.queryRestaurantSpecialist(userInput);
-            break;
-          case "trip":
-            response = await MultiLLMService.queryTripPlanner(userInput);
-            break;
-          case "food":
-            response = await MultiLLMService.queryFoodCritic(userInput);
-            break;
-          default:
-            throw new Error("不正なLLMタイプです");
-        }
+      // 選択されたAIに送信
+      switch (selectedLLM) {
+        case "restaurant_search":
+          // レストラン検索モード
+          setSearchResults(null); // 前の結果をクリア
+          
+          // LLM_AとLLM_Bを並行実行
+          const [llmAResponse, llmBResponse] = await Promise.all([
+            MultiLLMService.queryLLMA(userInput),
+            MultiLLMService.queryLLMB(userInput)
+          ]);
 
-        // 応答を追加
-        conversationManager.addMessage(
-          "assistant",
-          response.success ? response.data! : response.error!,
-          selectedLLM,
-          !response.success
-        );
-        
-        setMessages(conversationManager.getMessages());
+          if (llmAResponse.success && llmBResponse.success) {
+            // 統合検索を実行
+            const searchResult = await searchRestaurantsIntegrated(
+              llmAResponse.data as LLMAResponse,
+              llmBResponse.data as LLMBResponse,
+              userInput
+            );
+
+            setSearchResults(searchResult);
+
+            // 推薦文をメッセージに追加
+            const recommendationText = searchResult.llmCResponse || 
+              `${searchResult.restaurants.length}件のレストランが見つかりました。`;
+            
+            conversationManager.addMessage(
+              "assistant",
+              recommendationText,
+              selectedLLM,
+              false
+            );
+          } else {
+            throw new Error("レストラン検索に失敗しました");
+          }
+          break;
+
+        case "integrated":
+          response = await MultiLLMService.queryIntegratedAI(userInput);
+          conversationManager.addMessage(
+            "assistant",
+            response.success ? response.data! : response.error!,
+            selectedLLM,
+            !response.success
+          );
+          break;
+        case "llmA":
+          response = await MultiLLMService.queryLLMA(userInput);
+          conversationManager.addMessage(
+            "assistant",
+            response.success ? JSON.stringify(response.data, null, 2) : response.error!,
+            selectedLLM,
+            !response.success
+          );
+          break;
+        case "llmB":
+          response = await MultiLLMService.queryLLMB(userInput);
+          conversationManager.addMessage(
+            "assistant",
+            response.success ? (response.data as string[]).join(', ') : response.error!,
+            selectedLLM,
+            !response.success
+          );
+          break;
+        case "llmC":
+          response = await MultiLLMService.queryLLMC(userInput);
+          conversationManager.addMessage(
+            "assistant",
+            response.success ? response.data! : response.error!,
+            selectedLLM,
+            !response.success
+          );
+          break;
+        default:
+          throw new Error("不正なLLMタイプです");
       }
+      
+      setMessages(conversationManager.getMessages());
     } catch (error) {
       console.error("Error calling Multi-LLM:", error);
       conversationManager.addMessage(
@@ -85,26 +143,29 @@ export const AIConversationLayout = ({ id }: { id?: string }) => {
   const handleClearConversation = () => {
     conversationManager.clear();
     setMessages([]);
+    setSearchResults(null);
   };
 
   const getLLMDisplayName = (llmType: LLMType, isUser = false): string => {
     if (isUser) return "あなた";
     
     switch (llmType) {
-      case "master": return "🎯 マスターAI";
-      case "restaurant": return "🍽️ レストランAI";
-      case "trip": return "✈️ 旅行AI";
-      case "food": return "👨‍🍳 グルメAI";
+      case "restaurant_search": return "🍽️ レストラン検索AI";
+      case "integrated": return "🤝 統合AI";
+      case "llmA": return "🅰️ LLM_A";
+      case "llmB": return "🅱️ LLM_B";
+      case "llmC": return "©️ LLM_C";
       default: return "AI";
     }
   };
 
   const getPlaceholderText = (llmType: LLMType): string => {
     switch (llmType) {
-      case "master": return "何でもお気軽にご質問ください。適切な専門AIが対応します...";
-      case "restaurant": return "レストランについて教えてください（場所、料理の種類、予算など）...";
-      case "trip": return "旅行の目的地や期間、興味のあることを教えてください...";
-      case "food": return "料理やレストランについてのレビューや評価をお聞かせください...";
+      case "restaurant_search": return "レストランを探してください（例：渋谷で美味しいイタリアンを探している）...";
+      case "integrated": return "何でも質問してください。全てのLLMが連携して回答します...";
+      case "llmA": return "LLM_Aに質問してください...";
+      case "llmB": return "LLM_Bに質問してください...";
+      case "llmC": return "LLM_Cに質問してください...";
       default: return "メッセージを入力してください...";
     }
   };
@@ -119,10 +180,11 @@ export const AIConversationLayout = ({ id }: { id?: string }) => {
           onChange={(e) => setSelectedLLM(e.target.value as LLMType)}
           disabled={isLoading}
         >
-          <option value="master">🎯 マスターAI（推奨）</option>
-          <option value="restaurant">🍽️ レストラン専門AI</option>
-          <option value="trip">✈️ 旅行計画専門AI</option>
-          <option value="food">👨‍🍳 グルメ評価専門AI</option>
+          <option value="restaurant_search">🍽️ レストラン検索AI（推奨）</option>
+          <option value="integrated">🤝 統合AI</option>
+          <option value="llmA">🅰️ LLM_A</option>
+          <option value="llmB">🅱️ LLM_B</option>
+          <option value="llmC">©️ LLM_C</option>
         </SelectField>
         <Button 
           onClick={handleClearConversation}
@@ -136,10 +198,11 @@ export const AIConversationLayout = ({ id }: { id?: string }) => {
       {/* AI機能の説明 */}
       <Card marginBottom={tokens.space.medium} backgroundColor={tokens.colors.neutral[10]}>
         <Text fontSize={tokens.fontSizes.small} color={tokens.colors.neutral[80]}>
-          {selectedLLM === "master" && "🎯 マスターAI: あらゆる質問に対して、適切な専門AIを自動選択して回答します"}
-          {selectedLLM === "restaurant" && "🍽️ レストラン専門AI: お店探し、メニュー情報、予約方法など"}
-          {selectedLLM === "trip" && "✈️ 旅行計画専門AI: 観光プラン、ルート提案、宿泊情報など"}
-          {selectedLLM === "food" && "👨‍🍳 グルメ評価専門AI: 料理レビュー、味の分析、グルメ評価など"}
+          {selectedLLM === "restaurant_search" && "🍽️ レストラン検索AI: 自然言語でレストランを検索し、推薦文とリストを表示"}
+          {selectedLLM === "integrated" && "🤝 統合AI: 全てのLLM（A・B・C）を順次実行し、統合的な回答を提供"}
+          {selectedLLM === "llmA" && "🅰️ LLM_A: レストラン検索条件を構造化データで抽出"}
+          {selectedLLM === "llmB" && "🅱️ LLM_B: 検索キーワードを配列で抽出"}
+          {selectedLLM === "llmC" && "©️ LLM_C: レストラン推薦文を生成"}
         </Text>
       </Card>
 
@@ -187,6 +250,99 @@ export const AIConversationLayout = ({ id }: { id?: string }) => {
           </Card>
         )}
       </View>
+
+      {/* レストラン検索結果の表示 */}
+      {searchResults && searchResults.restaurants.length > 0 && (
+        <View marginBottom={tokens.space.medium}>
+          <Text fontSize={tokens.fontSizes.large} fontWeight="bold" marginBottom={tokens.space.medium}>
+            🍽️ 検索結果（{searchResults.restaurants.length}件）
+          </Text>
+          <View className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {searchResults.restaurants.map((restaurant, index) => (
+              <Card 
+                key={restaurant.id || index} 
+                className="overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 ease-in-out shadow-lg hover:shadow-xl bg-white"
+                padding={tokens.space.medium}
+              >
+                {/* レストラン画像 */}
+                {/* {restaurant.images && restaurant.images[0] && (
+                  <View marginBottom={tokens.space.small}>
+                    <img 
+                      src={restaurant.images[0]} 
+                      alt={restaurant.name}
+                      style={{ 
+                        width: '100%', 
+                        height: '200px', 
+                        objectFit: 'cover',
+                        borderRadius: tokens.radii.medium
+                      }}
+                    />
+                  </View>
+                )} */}
+                
+                {/* レストラン名 */}
+                <Text fontSize={tokens.fontSizes.large} fontWeight="bold" marginBottom={tokens.space.small}>
+                  {restaurant.name}
+                </Text>
+                
+                {/* タグ */}
+                <View className="flex flex-wrap gap-2 mb-3">
+                  {restaurant.area && (
+                    <span className="bg-teal-100 text-teal-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                      {restaurant.area}
+                    </span>
+                  )}
+                  {restaurant.cuisine?.[0] && (
+                    <span className="bg-pink-100 text-pink-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                      {restaurant.cuisine[0]}
+                    </span>
+                  )}
+                  {restaurant.priceCategory && (
+                    <span className="bg-gray-200 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                      {restaurant.priceCategory}
+                    </span>
+                  )}
+                </View>
+                
+                {/* 説明 */}
+                <Text 
+                  fontSize={tokens.fontSizes.small} 
+                  color={tokens.colors.neutral[60]} 
+                  marginBottom={tokens.space.medium}
+                >
+                  {restaurant.description 
+                    ? `${restaurant.description.substring(0, 80)}...` 
+                    : 'お店の説明がありません。'
+                  }
+                </Text>
+                
+                {/* 評価と価格 */}
+                <View className="flex justify-between items-center text-sm border-t pt-3">
+                  <Text fontSize={tokens.fontSizes.small} fontWeight="bold">
+                    {restaurant.ratingAverage ? `⭐ ${restaurant.ratingAverage}` : '評価なし'}
+                  </Text>
+                  {restaurant.priceMin && restaurant.priceMax && (
+                    <Text fontSize={tokens.fontSizes.small} color={tokens.colors.neutral[60]}>
+                      ¥{restaurant.priceMin} - ¥{restaurant.priceMax}
+                    </Text>
+                  )}
+                </View>
+                
+                {/* 住所 */}
+                {restaurant.address && (
+                  <Text 
+                    fontSize={tokens.fontSizes.xs} 
+                    color={tokens.colors.neutral[50]} 
+                    marginTop={tokens.space.xs}
+                  >
+                    📍 {restaurant.address}
+                  </Text>
+                )}
+              </Card>
+            ))}
+          </View>
+        </View>
+      )}
 
       <Divider marginBottom={tokens.space.medium} />
 

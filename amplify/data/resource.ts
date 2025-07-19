@@ -1,9 +1,8 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 import { 
-  masterOrchestratorPrompt,
-  restaurantSpecialistPrompt,
-  tripPlannerPrompt,
-  foodCriticPrompt
+  llmAPrompt,
+  llmBPrompt,
+  llmCPrompt
 } from "../prompts/multi-llm";
 
 
@@ -57,7 +56,7 @@ const schema = a.schema({
   KeywordRestaurant: a
     .model({
       keywordId: a.id().required(),
-      restaurantId: a.id().required(),
+      restaurantId: a.string().required(),
 
       // 双方向リレーション
       keyword: a.belongsTo("Keyword", "keywordId"),
@@ -82,101 +81,77 @@ const schema = a.schema({
     ]),
 
   /**
-   * LLM_B: レストラン専門AI
-   * レストラン情報、検索、推薦に特化
+   * LLM_A - レストラン検索条件抽出
    */
-  restaurantSpecialist: a
+  llmA: a
     .generation({
-      aiModel: a.ai.model("Claude 3.5 Sonnet"),
-      systemPrompt: restaurantSpecialistPrompt,
+      aiModel: a.ai.model("Claude 3 Haiku"),
+      systemPrompt: llmAPrompt,
       inferenceConfiguration: {
         temperature: 0.7,
-        maxTokens: 1000,
+        maxTokens: 500,
       },
     })
     .arguments({ 
-      query: a.string().required(),
-      location: a.string(),
-      budget: a.string(),
-      occasion: a.string(),
+      prompt: a.string().required(),
     })
-    .returns(a.string())
+    .returns(
+      a.customType({
+        id: a.string(),
+        name: a.string(),
+        description: a.string(),
+        address: a.string(),
+        area: a.string(),
+        latitude: a.float(),
+        longitude: a.float(),
+        cuisine: a.string().array(),
+        priceMin: a.integer(),
+        priceMax: a.integer(),
+        priceCategory: a.string(),
+        openingHours: a.json(),
+        ratingAverage: a.float(),
+        ratingCount: a.integer(),
+        images: a.string().array(),
+      })
+    )
     .authorization((allow) => [allow.authenticated(), allow.publicApiKey()]),
 
   /**
-   * LLM_C: 旅行計画専門AI
-   * 旅行プラン、観光地情報、ルート提案に特化
+   * LLM_B - キーワード抽出
    */
-  tripPlanner: a
+  llmB: a
     .generation({
-      aiModel: a.ai.model("Claude 3.5 Sonnet"),
-      systemPrompt: tripPlannerPrompt,
+      aiModel: a.ai.model("Claude 3 Haiku"),
+      systemPrompt: llmBPrompt,
       inferenceConfiguration: {
         temperature: 0.8,
-        maxTokens: 1200,
+        maxTokens: 500,
       },
     })
     .arguments({ 
-      destination: a.string().required(),
-      duration: a.string(),
-      budget: a.string(),
-      interests: a.string(),
+      prompt: a.string().required(),
     })
-    .returns(a.string())
+    .returns(a.string().array())
     .authorization((allow) => [allow.authenticated(), allow.publicApiKey()]),
 
   /**
-   * LLM_D: フードクリティック専門AI
-   * 料理レビュー、味覚分析、グルメ評価に特化
+   * LLM_C
    */
-  foodCritic: a
+  llmC: a
     .generation({
-      aiModel: a.ai.model("Claude 3.5 Sonnet"),
-      systemPrompt: foodCriticPrompt,
+      aiModel: a.ai.model("Claude 3 Haiku"),
+      systemPrompt: llmCPrompt,
       inferenceConfiguration: {
         temperature: 0.6,
-        maxTokens: 800,
+        maxTokens: 500,
       },
     })
     .arguments({ 
-      foodItem: a.string().required(),
-      restaurant: a.string(),
-      context: a.string(),
+      prompt: a.string().required(),
     })
     .returns(a.string())
     .authorization((allow) => [allow.authenticated(), allow.publicApiKey()]),
 
-  /**
-   * LLM_A: マスターオーケストレーター
-   * 複数の専門AIを適切に使い分けるメインAI
-   */
-  masterOrchestrator: a
-    .conversation({
-      aiModel: a.ai.model("Claude 3.5 Sonnet"),
-      systemPrompt: masterOrchestratorPrompt,
-      inferenceConfiguration: {
-        temperature: 0.5,
-        maxTokens: 1500,
-      },
-      tools: [
-        a.ai.dataTool({
-          name: "restaurant_specialist",
-          description: "レストラン情報、グルメ検索、店舗詳細を提供する専門AI",
-          query: a.ref("restaurantSpecialist"),
-        }),
-        a.ai.dataTool({
-          name: "trip_planner",
-          description: "旅行計画、観光地情報、ルート提案を行う専門AI",
-          query: a.ref("tripPlanner"),
-        }),
-        a.ai.dataTool({
-          name: "food_critic",
-          description: "料理レビュー、味の分析、グルメ評価を行う専門AI",
-          query: a.ref("foodCritic"),
-        }),
-      ],
-    })
-    .authorization((allow) => allow.owner()),
 });
 
 export type Schema = ClientSchema<typeof schema>;
