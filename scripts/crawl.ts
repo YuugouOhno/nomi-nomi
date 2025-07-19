@@ -123,7 +123,7 @@ async function crawlCity(city: { name: string; location: { lat: number; lng: num
                 const priceInfo = convertPriceLevel(details.price_level);
 
                 const restaurantData = {
-                    placeId: place.place_id,
+                    Id: place.place_id,
                     name: place.name,
                     description: details.editorial_summary?.overview || null,
                     address: place.formatted_address || '住所不明',
@@ -135,12 +135,6 @@ async function crawlCity(city: { name: string; location: { lat: number; lng: num
                     priceMax: priceInfo.priceMax,
                     priceCategory: priceInfo.priceCategory,
                     openingHours: details.opening_hours ? JSON.stringify(details.opening_hours.weekday_text) : null,
-                    features: [
-                        ...(details.serves_beer ? ['ビールあり'] : []),
-                        ...(details.serves_wine ? ['ワインあり'] : []),
-                    ],
-                    ambience: [],
-                    keywords: [],
                     ratingAverage: place.rating || null,
                     ratingCount: place.user_ratings_total || null,
                     images: place.photos?.map(p => p.photo_reference || '') || [],

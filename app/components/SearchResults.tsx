@@ -8,6 +8,9 @@ export function SearchResults({ results }: { results: Restaurant[] }) {
 
   return (
     <div className="flex flex-wrap justify-center -m-8 p-8">
+      <pre className="text-xs text-gray-500 overflow-auto max-h-64">
+        {JSON.stringify(results, null, 2)}
+      </pre>
       {results.map((restaurant) => (
         <div key={restaurant.id} className="w-full sm:w-1/2 lg:w-1/3 p-8">
           <Card className="overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 ease-in-out shadow-lg hover:shadow-xl flex flex-col bg-white h-full">

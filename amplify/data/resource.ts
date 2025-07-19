@@ -3,7 +3,7 @@ import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 const schema = a.schema({
   Restaurant: a
     .model({
-      placeId: a.string().required(), // Google Place ID
+      id: a.string().required(), // Google Place ID
       name: a.string().required(),
       description: a.string(),
       address: a.string().required(),
@@ -15,12 +15,10 @@ const schema = a.schema({
       priceMax: a.integer(),
       priceCategory: a.string(),
       openingHours: a.json(),
-      features: a.string().array(),
-      ambience: a.string().array(),
       ratingAverage: a.float(),
       ratingCount: a.integer(),
       images: a.string().array(),
-      keywords: a.string().array(),
+      keywords: a.hasMany("KeywordRestaurant", "restaurantId"),
     })
     .authorization((allow) => [
       allow.publicApiKey().to(["create", "read", "update", "delete"]),
@@ -35,6 +33,31 @@ const schema = a.schema({
     })
     .authorization((allow) => [
       allow.owner().to(["read", "update"]),
+      allow.group("admin").to(["create", "read", "update", "delete"]),
+    ]),
+  
+  Keyword: a
+    .model({
+      id: a.id(),
+      keyword: a.string().required(),
+      restaurants: a.hasMany("KeywordRestaurant", "keywordId"),
+    })
+    .authorization((allow) => [
+      allow.owner().to(["read", "update"]),
+      allow.group("admin").to(["create", "read", "update", "delete"]),
+    ]),
+  
+  KeywordRestaurant: a
+    .model({
+      keywordId: a.id().required(),
+      restaurantId: a.id().required(),
+
+      // 双方向リレーション
+      keyword: a.belongsTo("Keyword", "keywordId"),
+      restaurant: a.belongsTo("Restaurant", "restaurantId"),
+    })
+    .authorization((allow) => [
+      allow.publicApiKey().to(["create", "read", "delete"]),
       allow.group("admin").to(["create", "read", "update", "delete"]),
     ]),
 

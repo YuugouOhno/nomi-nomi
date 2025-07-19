@@ -23,13 +23,10 @@ export async function PUT(
       address: body.address,
       area: body.area,
       cuisine: body.cuisine,
-      features: body.features || [],
-      ambience: body.ambience,
       ratingAverage: body.rating || 0,
       priceCategory: body.priceCategory || '¥¥',
       openingHours: body.openingHours || '',
       images: body.images || [],
-      keywords: body.keywords || ''
     });
     
     if (response.errors) {
