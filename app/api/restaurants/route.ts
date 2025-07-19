@@ -22,13 +22,11 @@ export async function GET() {
       address: restaurant.address,
       area: restaurant.area,
       cuisine: restaurant.cuisine,
-      features: restaurant.features || [],
-      ambience: restaurant.ambience,
       rating: restaurant.ratingAverage || 0,
       priceCategory: restaurant.priceCategory || '¥¥',
       openingHours: typeof restaurant.openingHours === 'string' 
         ? restaurant.openingHours 
-        : JSON.parse(restaurant.openingHours || '{}'),
+        : JSON.stringify(restaurant.openingHours || {}),
       
       images: restaurant.images || [],
       keywords: restaurant.keywords || ''
@@ -66,14 +64,11 @@ export async function POST(request: NextRequest) {
       address: body.address,
       area: body.area,
       cuisine: body.cuisine || [],
-      features: body.features || [],
-      ambience: body.ambience || [],
       ratingAverage: body.rating || body.ratingAverage || 0,
       ratingCount: body.ratingCount || 0,
       priceCategory: body.priceCategory || '¥¥',
       openingHours: JSON.stringify(body.openingHours || '11:00-22:00'),
       images: body.images || [],
-      keywords: body.keywords || [],
       latitude: body.latitude || null,
       longitude: body.longitude || null,
       priceMin: body.priceMin || null,

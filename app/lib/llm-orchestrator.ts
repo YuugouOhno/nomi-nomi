@@ -263,7 +263,7 @@ async function searchRestaurants(
     // キーワード検索
     if (keywordParams.searchableKeywords.length > 0) {
       restaurants = restaurants.filter(r => {
-        const searchText = `${r.name} ${r.description} ${r.cuisine} ${r.features} ${r.ambience} ${r.keywords}`.toLowerCase();
+        const searchText = `${r.name} ${r.description} ${r.cuisine} ${r.keywords}`.toLowerCase();
         return keywordParams.searchableKeywords.some(keyword => 
           searchText.includes(keyword.toLowerCase())
         );
@@ -278,8 +278,6 @@ async function searchRestaurants(
       address: restaurant.address,
       area: restaurant.area,
       cuisine: restaurant.cuisine,
-      features: restaurant.features || [],
-      ambience: restaurant.ambience,
       rating: restaurant.ratingAverage || 0,
       priceCategory: restaurant.priceCategory || '¥¥',
       openingHours: restaurant.openingHours || '',

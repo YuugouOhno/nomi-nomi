@@ -79,7 +79,7 @@ async function crawlCity(city: { name: string; location: { lat: number; lng: num
                     location: city.location,
                     radius: SEARCH_RADIUS,
                     type: 'restaurant',
-                    language: 'ja',
+                    language: 'ja' as any,
                     key: GOOGLE_PLACES_API_KEY!,
                     pagetoken: nextPageToken,
                 },
@@ -98,7 +98,7 @@ async function crawlCity(city: { name: string; location: { lat: number; lng: num
 
                 const { data: existing } = await client.models.Restaurant.list({
                     filter: {
-                        placeId: { eq: place.place_id }
+                        id: { eq: place.place_id }
                     }
                 });
 
@@ -114,7 +114,7 @@ async function crawlCity(city: { name: string; location: { lat: number; lng: num
                     params: {
                         place_id: place.place_id,
                         fields: ["editorial_summary", "opening_hours", "serves_beer", "serves_wine", "price_level", "reviews"],
-                        language: 'ja',
+                        language: 'ja' as any,
                         key: GOOGLE_PLACES_API_KEY!,
                     },
                 });
@@ -144,7 +144,7 @@ async function crawlCity(city: { name: string; location: { lat: number; lng: num
 
                 if (errors) {
                     console.error(`  - [エラー] ${place.name} の保存に失敗しました:`, errors);
-                } else {
+                } else if (newRestaurant) {
                     console.log(`  - [成功] ${newRestaurant.name} をデータベースに保存しました。`);
                 }
 
