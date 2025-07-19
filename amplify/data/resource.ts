@@ -3,6 +3,7 @@ import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 const schema = a.schema({
   Restaurant: a
     .model({
+      placeId: a.string().required(), // Google Place ID
       name: a.string().required(),
       description: a.string(),
       address: a.string().required(),

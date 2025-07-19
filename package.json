@@ -12,9 +12,11 @@
   "dependencies": {
     "@aws-amplify/ui-react": "^6.5.5",
     "@aws-sdk/client-bedrock-runtime": "^3.846.0",
+    "@googlemaps/google-maps-services-js": "^3.4.2",
     "@tailwindcss/postcss": "^4.1.11",
     "aws-amplify": "^6.6.6",
     "clsx": "^2.1.1",
+    "dotenv": "^17.2.0",
     "next": "14.2.10",
     "react": "^18",
     "react-dom": "^18",
