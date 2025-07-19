@@ -10,7 +10,7 @@
 
 ### 全体アーキテクチャ
 
-```mermaid
+```mermaidのみのみっっv
 graph TD
     A[フロントエンド - Next.js] --> B[API レイヤー]
     B --> C[LLM オーケストレーター]

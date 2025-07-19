@@ -10,7 +10,7 @@ import Link from "next/link";
 // ==================================================================
 // 開発用の設定
 // trueにすると、APIを叩かずにダミーデータを表示します
-const useDummyData = true;
+const useDummyData = false;
 // ==================================================================
 
 const dummyRestaurants: Restaurant[] = [
