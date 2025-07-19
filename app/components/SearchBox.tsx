@@ -23,7 +23,7 @@ export function SearchBox({ onSearch, isLoading }: SearchBoxProps) {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="例: 銀座で寿司、個室あり"
-        className="flex-grow px-4 py-3 text-base md:text-lg border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200 shadow-sm"
+        className="flex-grow px-4 py-3 text-base md:text-lg text-gray-700 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200 shadow-sm"
         disabled={isLoading}
       />
       <button 

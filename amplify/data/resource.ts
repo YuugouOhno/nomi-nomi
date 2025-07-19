@@ -22,7 +22,7 @@ const schema = a.schema({
       keywords: a.string().array(),
     })
     .authorization((allow) => [
-      allow.publicApiKey().to(["read"]),
+      allow.publicApiKey().to(["create", "read", "update", "delete"]),
       allow.group("admin").to(["create", "read", "update", "delete"]),
     ]),
 
