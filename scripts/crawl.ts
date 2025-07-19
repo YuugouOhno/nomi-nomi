@@ -123,7 +123,7 @@ async function crawlCity(city: { name: string; location: { lat: number; lng: num
                 const priceInfo = convertPriceLevel(details.price_level);
 
                 const restaurantData = {
-                    Id: place.place_id,
+                    id: place.place_id,
                     name: place.name,
                     description: details.editorial_summary?.overview || null,
                     address: place.formatted_address || '住所不明',
