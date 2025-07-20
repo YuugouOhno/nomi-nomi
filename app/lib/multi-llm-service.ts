@@ -725,14 +725,21 @@ export async function searchRestaurantsIntegrated(
         `${index + 1}. ${restaurant.name} (${restaurant.area}) - ${restaurant.cuisine?.join(', ') || '料理タイプ未設定'} - ${restaurant.priceCategory || '価格未設定'} - 評価${restaurant.ratingAverage || 'なし'}`
       ).join('\n');
 
-      const llmCPrompt = `
-元の質問: ${originalPrompt}
+      const llmCPrompt = `あなたは飲食店検索システムの一部として、検索結果に基づいて推薦文を生成するAIです。
+以下のレストラン情報と元のユーザークエリに基づいて、魅力的な推薦文を作成してください。
 
-見つかったレストラン:
-${restaurantSummary}
+ユーザークエリ: "${originalPrompt}"
 
-上記のレストランを基に、ユーザーに対する推薦文を作成してください。
-`;
+レストラン情報: ${JSON.stringify(filteredRestaurants, null, 2)}
+
+以下の要件で推薦文を作成してください：
+1. 自然な日本語で200文字程度
+2. ユーザーの要望に合った理由を説明
+3. レストランの特徴や魅力を簡潔に伝える
+4. 親しみやすく、説得力のある文章にする
+5. 「以下のレストランがおすすめです」のような結びで終わる
+
+推薦文のみを返してください（JSONや他の形式は不要）：`;
 
       try {
         const llmCResult = await MultiLLMService.queryLLMC(llmCPrompt);
