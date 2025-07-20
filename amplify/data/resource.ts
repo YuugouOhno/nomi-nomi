@@ -1,4 +1,10 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
+import { 
+  llmAPrompt,
+  llmBPrompt,
+  llmCPrompt
+} from "../prompts/multi-llm";
+
 
 const schema = a.schema({
   Restaurant: a
@@ -51,7 +57,7 @@ const schema = a.schema({
   KeywordRestaurant: a
     .model({
       keywordId: a.id().required(),
-      restaurantId: a.id().required(),
+      restaurantId: a.string().required(),
 
       // 双方向リレーション
       keyword: a.belongsTo("Keyword", "keywordId"),
@@ -74,6 +80,79 @@ const schema = a.schema({
       allow.owner().to(["read"]),
       allow.group("admin").to(["read", "delete"]),
     ]),
+
+  /**
+   * LLM_A - レストラン検索条件抽出
+   */
+  llmA: a
+    .generation({
+      aiModel: a.ai.model("Claude 3 Haiku"),
+      systemPrompt: llmAPrompt,
+      inferenceConfiguration: {
+        temperature: 0.7,
+        maxTokens: 500,
+      },
+    })
+    .arguments({ 
+      prompt: a.string().required(),
+    })
+    .returns(
+      a.customType({
+        id: a.string(),
+        name: a.string(),
+        description: a.string(),
+        address: a.string(),
+        area: a.string(),
+        latitude: a.float(),
+        longitude: a.float(),
+        cuisine: a.string().array(),
+        priceMin: a.integer(),
+        priceMax: a.integer(),
+        priceCategory: a.string(),
+        openingHours: a.json(),
+        ratingAverage: a.float(),
+        ratingCount: a.integer(),
+        images: a.string().array(),
+      })
+    )
+    .authorization((allow) => [allow.authenticated(), allow.publicApiKey()]),
+
+  /**
+   * LLM_B - キーワード抽出
+   */
+  llmB: a
+    .generation({
+      aiModel: a.ai.model("Claude 3 Haiku"),
+      systemPrompt: llmBPrompt,
+      inferenceConfiguration: {
+        temperature: 0.8,
+        maxTokens: 500,
+      },
+    })
+    .arguments({ 
+      prompt: a.string().required(),
+    })
+    .returns(a.string().array())
+    .authorization((allow) => [allow.authenticated(), allow.publicApiKey()]),
+
+  /**
+   * LLM_C
+   */
+  llmC: a
+    .generation({
+      aiModel: a.ai.model("Claude 3 Haiku"),
+      systemPrompt: llmCPrompt,
+      inferenceConfiguration: {
+        temperature: 0.6,
+        maxTokens: 500,
+      },
+    })
+    .arguments({ 
+      prompt: a.string().required(),
+    })
+    .returns(a.string())
+    .authorization((allow) => [allow.authenticated(), allow.publicApiKey()]),
+
 });
 
 export type Schema = ClientSchema<typeof schema>;
@@ -87,4 +166,3 @@ export const data = defineData({
     },
   },
 });
-

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
+import { ClientSideAmplifyConfig } from "./components/AmplifyConfig";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -16,6 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
+      <ClientSideAmplifyConfig />
       <body className={`${inter.className} bg-gray-50 text-gray-800`}> 
          <header className="bg-white shadow-sm main-header">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3">
