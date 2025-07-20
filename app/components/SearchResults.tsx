@@ -1,5 +1,6 @@
 import { Restaurant } from "../types";
 import { Card, CardContent, CardHeader } from "./ui/Card";
+import { generateGoogleMapsLink } from '../lib/generate-link';
 
 export function SearchResults({ results }: { results: Restaurant[] }) {
   if (!results || results.length === 0) {
@@ -8,9 +9,6 @@ export function SearchResults({ results }: { results: Restaurant[] }) {
 
   return (
     <div className="flex flex-wrap justify-center -m-8 p-8">
-      <pre className="text-xs text-gray-500 overflow-auto max-h-64">
-        {JSON.stringify(results, null, 2)}
-      </pre>
       {results.map((restaurant) => (
         <div key={restaurant.id} className="w-full sm:w-1/2 lg:w-1/3 p-8">
           <Card className="overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 ease-in-out shadow-lg hover:shadow-xl flex flex-col bg-white h-full">
@@ -33,7 +31,7 @@ export function SearchResults({ results }: { results: Restaurant[] }) {
               </p>
               <div className="flex justify-between items-center text-sm text-gray-700 mt-auto pt-4 border-t border-gray-100">
                 <span className="font-bold">{restaurant.ratingAverage ? `⭐ ${restaurant.ratingAverage}` : '評価なし'}</span>
-                <a href="#" className="text-blue-600 hover:underline font-semibold">詳細を見る</a>
+                <a href={generateGoogleMapsLink(restaurant.name, restaurant.placeId)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-semibold">詳細を見る</a>
               </div>
             </CardContent>
           </Card>
