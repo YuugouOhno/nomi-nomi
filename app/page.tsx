@@ -5,6 +5,7 @@ import { SearchBox } from "./components/SearchBox";
 import { SearchResults } from "./components/SearchResults";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 import { Restaurant } from "./types";
+import { generateGoogleMapsLink } from './lib/generate-link';
 import Link from "next/link";
 
 import { 
@@ -177,6 +178,7 @@ export default function Home() {
                         ¥{restaurant.priceMin} - ¥{restaurant.priceMax}
                       </span>
                     )}
+                    <a href={generateGoogleMapsLink(restaurant.name, restaurant.placeId)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-semibold">詳細を見る</a>
                   </div>
                   
                   {/* 住所 */}
