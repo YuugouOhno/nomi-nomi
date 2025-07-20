@@ -43,6 +43,7 @@ const schema = a.schema({
       restaurants: a.hasMany("KeywordRestaurant", "keywordId"),
     })
     .authorization((allow) => [
+      allow.publicApiKey().to(["create", "read", "update", "delete"]),
       allow.owner().to(["read", "update"]),
       allow.group("admin").to(["create", "read", "update", "delete"]),
     ]),
