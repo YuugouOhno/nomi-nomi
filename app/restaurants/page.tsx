@@ -18,6 +18,7 @@ interface Restaurant {
   priceRange?: string;
   priceCategory?: string;
   openingHours: string | Record<string, { open: string; close: string }>;
+  keywords?: string[];
 }
 
 export default function RestaurantsPage() {
@@ -147,6 +148,23 @@ export default function RestaurantsPage() {
                       : restaurant.ambience}
                   </span>
                 </div>
+
+                {/* キーワードタグ */}
+                {restaurant.keywords && restaurant.keywords.length > 0 && (
+                  <div className="mt-4">
+                    <span className="font-medium text-gray-700 text-sm">キーワード:</span>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {restaurant.keywords.map((keyword, index) => (
+                        <span 
+                          key={index}
+                          className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full border border-green-200"
+                        >
+                          #{keyword}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}

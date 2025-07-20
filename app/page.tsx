@@ -7,13 +7,24 @@ import { LoadingSpinner } from "./components/LoadingSpinner";
 import { Restaurant } from "./types";
 import Link from "next/link";
 
-import { AIConversationLayout } from "@/app/components/AIConversationLayout";
+import { 
+  MultiLLMService, 
+  searchRestaurantsIntegrated,
+  LLMAResponse,
+  LLMBResponse
+} from "@/app/lib/multi-llm-service";
+
+interface RestaurantSearchResult {
+  restaurants: any[];
+  llmCResponse?: string;
+}
 
 export default function Home() {
   const [results, setResults] = useState<Restaurant[]>([]);
   const [recommendation, setRecommendation] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<RestaurantSearchResult | null>(null);
 
   //キーワード抽出
   const [input, setInput] = useState('');
@@ -51,26 +62,34 @@ export default function Home() {
     setError(null);
     setResults([]);
     setRecommendation("");
+    setSearchResults(null);
 
-    
-    // --- 実際のAPIを呼び出す場合 ---
-    console.log("/api/searchの呼び出し")
     try {
-      const response = await fetch("/api/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
-      });
+      // LLM_AとLLM_Bを並行実行
+      const [llmAResponse, llmBResponse] = await Promise.all([
+        MultiLLMService.queryLLMA(query),
+        MultiLLMService.queryLLMB(query)
+      ]);
 
-      if (!response.ok) {
-        throw new Error("検索に失敗しました。もう一度お試しください。");
+      if (llmAResponse.success && llmBResponse.success) {
+        // 統合検索を実行
+        const searchResult = await searchRestaurantsIntegrated(
+          llmAResponse.data as LLMAResponse,
+          llmBResponse.data as LLMBResponse,
+          query
+        );
+
+        setSearchResults(searchResult);
+
+        // 推薦文を設定
+        const recommendationText = searchResult.llmCResponse || 
+          `${searchResult.restaurants.length}件のレストランが見つかりました。`;
+        
+        setRecommendation(recommendationText);
+        setResults(searchResult.restaurants);
+      } else {
+        throw new Error("レストラン検索に失敗しました");
       }
-
-      const data = await response.json();
-      setRecommendation(data.message);
-      // TODO: data.restaurants にはIDしか入っていないので、
-      // 本来はIDを元にレストラン情報を取得する処理が必要
-      setResults(data.restaurants);
     } catch (e: any) {
       console.error('検索エラー:', e);
       const errorMessage = e.message || "検索に失敗しました。もう一度お試しください。";
@@ -105,7 +124,76 @@ export default function Home() {
         </div>
       )}
 
-      {results.length > 0 && <SearchResults results={results} />}
+      {/* レストラン検索結果の表示 */}
+      {searchResults && searchResults.restaurants.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-6 text-center">🍽️ 検索結果（{searchResults.restaurants.length}件）</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {searchResults.restaurants.map((restaurant, index) => (
+              <div 
+                key={restaurant.id || index} 
+                className="bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 ease-in-out hover:shadow-xl"
+              >
+                {/* レストラン名 */}
+                <div className="p-6">
+                  <h3 className="text-xl font-bold mb-3 text-gray-800">
+                    {restaurant.name}
+                  </h3>
+                  
+                  {/* タグ */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {restaurant.area && (
+                      <span className="bg-teal-100 text-teal-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                        {restaurant.area}
+                      </span>
+                    )}
+                    {restaurant.cuisine?.[0] && (
+                      <span className="bg-pink-100 text-pink-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                        {restaurant.cuisine[0]}
+                      </span>
+                    )}
+                    {restaurant.priceCategory && (
+                      <span className="bg-gray-200 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                        {restaurant.priceCategory}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* 説明 */}
+                  <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+                    {restaurant.description 
+                      ? `${restaurant.description.substring(0, 100)}...` 
+                      : 'お店の説明がありません。'
+                    }
+                  </p>
+                  
+                  {/* 評価と価格 */}
+                  <div className="flex justify-between items-center text-sm border-t pt-4">
+                    <span className="font-bold text-yellow-600">
+                      {restaurant.ratingAverage ? `⭐ ${restaurant.ratingAverage}` : '評価なし'}
+                    </span>
+                    {restaurant.priceMin && restaurant.priceMax && (
+                      <span className="text-gray-600">
+                        ¥{restaurant.priceMin} - ¥{restaurant.priceMax}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* 住所 */}
+                  {restaurant.address && (
+                    <p className="text-xs text-gray-500 mt-3">
+                      📍 {restaurant.address}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* 従来のSearchResultsコンポーネントも残す（フォールバック用） */}
+      {!searchResults && results.length > 0 && <SearchResults results={results} />}
 
       <div className="text-center mt-12">
         <Link 
@@ -115,100 +203,6 @@ export default function Home() {
           レストラン一覧を見る
         </Link>
       </div>
-      <div className="mt-12 p-4  bg-green-600 rounded-lg shadow">
-         <h1 className="text-2xl font-bold mb-4">🔍 キーワード抽出（Claude）</h1>
-      <textarea
-        className="w-full border p-2 rounded"
-        rows={5}
-        placeholder="文章を入力してください"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-      />
-      <button
-        className="mt-3 px-4 py-2 bg-blue-600 text-white rounded"
-        onClick={handleExtract}
-        disabled={loading}
-      >
-        {loading ? '抽出中...' : '抽出する'}
-      </button>
-
-      {keywords.length > 0 && (
-        <ul className="mt-4 list-disc pl-6">
-          {keywords.map((kw, idx) => (
-            <li key={idx}>{kw}</li>
-          ))}
-        </ul>
-        )}
-        </div>
     </div>
   );
 }
-
-
-// // app/page.tsx（例）
-// // app/page.tsx（例）
-// // 渋谷で安くておしゃれな居酒屋を探しています。個室があって、女性にも人気な店が理想です。
-
-// // 'use client';
-
-// // import { useState } from 'react';
-// import 'dotenv/config';
-
-// // export default function Home() {
-//   const [input, setInput] = useState('');
-//   const [keywords, setKeywords] = useState<string[]>([]);
-//   const [loading, setLoading] = useState(false);
-
-//   const handleExtract = async () => {
-//     setLoading(true);
-
-//     const response = await fetch('/api/invoke', {
-//       method: 'POST',
-//       body: JSON.stringify({
-//         prompt: `以下の文章から重要なキーワードを5〜10個抽出してください。\n\n出力形式: {"keywords": ["..."]}\n\n文章:\n${input}`,
-//       }),
-//       headers: {
-//         'Content-Type': 'application/json',
-//       },
-//     });
-
-//     const json = await response.json();
-
-//     try {
-//       const parsed = JSON.parse(json.result);
-//       setKeywords(parsed.keywords || []);
-//     } catch (e) {
-//       console.error('JSONパース失敗:', json.result);
-//     }
-
-//     setLoading(false);
-//   };
-
-//   return (
-//     <main className="p-4 max-w-xl mx-auto">
-//       <h1 className="text-2xl font-bold mb-4">🔍 キーワード抽出（Claude）</h1>
-//       <textarea
-//         className="w-full border p-2 rounded"
-//         rows={5}
-//         placeholder="文章を入力してください"
-//         value={input}
-//         onChange={(e) => setInput(e.target.value)}
-//       />
-//       <button
-//         className="mt-3 px-4 py-2 bg-blue-600 text-white rounded"
-//         onClick={handleExtract}
-//         disabled={loading}
-//       >
-//         {loading ? '抽出中...' : '抽出する'}
-//       </button>
-
-//       {keywords.length > 0 && (
-//         <ul className="mt-4 list-disc pl-6">
-//           {keywords.map((kw, idx) => (
-//             <li key={idx}>{kw}</li>
-//           ))}
-//         </ul>
-//       )}
-//     </main>
-//   );
-// }

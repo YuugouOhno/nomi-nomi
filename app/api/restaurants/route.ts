@@ -14,23 +14,54 @@ export async function GET() {
     const response = await client.models.Restaurant.list();
     const restaurants = response.data;
     
-    // データを整形
-    const formattedRestaurants = restaurants.map(restaurant => ({
-      id: restaurant.id,
-      name: restaurant.name,
-      description: restaurant.description || '',
-      address: restaurant.address,
-      area: restaurant.area,
-      cuisine: restaurant.cuisine,
-      rating: restaurant.ratingAverage || 0,
-      priceCategory: restaurant.priceCategory || '¥¥',
-      openingHours: typeof restaurant.openingHours === 'string' 
-        ? restaurant.openingHours 
-        : JSON.stringify(restaurant.openingHours || {}),
-      
-      images: restaurant.images || [],
-      keywords: restaurant.keywords || ''
-    }));
+    // 各レストランに関連するキーワードを取得
+    const formattedRestaurants = await Promise.all(
+      restaurants.map(async (restaurant) => {
+        // KeywordRestaurant経由でレストランに関連するキーワードを取得
+        const keywordRestaurantResponse = await client.models.KeywordRestaurant.list({
+          filter: {
+            restaurantId: { eq: restaurant.id }
+          }
+        });
+        
+        // キーワードIDからキーワード情報を取得
+        const keywords: string[] = [];
+        if (keywordRestaurantResponse.data) {
+          for (const kr of keywordRestaurantResponse.data) {
+            if (kr.keywordId) {
+              try {
+                const keywordResponse = await client.models.Keyword.get({ id: kr.keywordId });
+                if (keywordResponse.data?.keyword) {
+                  keywords.push(keywordResponse.data.keyword);
+                }
+              } catch (error) {
+                console.warn(`キーワード取得エラー (ID: ${kr.keywordId}):`, error);
+              }
+            }
+          }
+        }
+        
+        return {
+          id: restaurant.id,
+          name: restaurant.name,
+          description: restaurant.description || '',
+          address: restaurant.address,
+          area: restaurant.area,
+          cuisine: restaurant.cuisine,
+          rating: restaurant.ratingAverage || 0,
+          ratingAverage: restaurant.ratingAverage || 0,
+          priceCategory: restaurant.priceCategory || '¥¥',
+          priceRange: restaurant.priceCategory || '¥¥',
+          openingHours: typeof restaurant.openingHours === 'string' 
+            ? restaurant.openingHours 
+            : JSON.stringify(restaurant.openingHours || {}),
+          features: [],
+          ambience: restaurant.description || '',
+          images: restaurant.images || [],
+          keywords: keywords
+        };
+      })
+    );
     
     return NextResponse.json({
       restaurants: formattedRestaurants,
