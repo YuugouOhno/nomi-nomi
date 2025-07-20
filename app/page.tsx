@@ -33,7 +33,7 @@ export default function Home() {
       },
     });
     const json = await response.json();
-    console.log("invoke response", json); // ←これを追加
+    //console.log("invoke response", json); // ←これを追加
 
     try {
       const parsed = JSON.parse(json.result);
