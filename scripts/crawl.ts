@@ -4,10 +4,18 @@ import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '@/amplify/data/resource';
 import { Amplify } from 'aws-amplify';
 import outputs from '../amplify_outputs.json';
+import dotenv from 'dotenv';
+import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+function loadPrompt(fileName: string): string {
+  const filePath = join(__dirname, '..', 'scripts/prompts', fileName);
+  return readFileSync(filePath, 'utf-8');
+}
 
 // Amplifyの設定を読み込む
 Amplify.configure(outputs);
-
 
 // .env.localファイルから環境変数を読み込む
 config({ path: '.env.local' });
@@ -25,7 +33,7 @@ const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 
 // 検索対象の都市リスト (緯度・経度)
 const TARGET_CITIES = [
-    { name: 'Shibuya', location: { lat: 35.6585, lng: 139.7013 } },
+    { name: 'Shibuya', location: { lat: 35.6585, lng: 139.6513 } },
 ];
 
 // 検索半径 (メートル)
@@ -50,6 +58,22 @@ function convertPriceLevel(priceLevel: number | undefined): {
     }
 }
 
+//bedrock関連
+
+// ClaudeモデルID（必要に応じて変更）
+const CLAUDE_MODEL_ID =  'us.anthropic.claude-3-7-sonnet-20250219-v1:0';
+
+// AWSクライアント初期化
+const bedrock_client = new BedrockRuntimeClient({
+  region: process.env.AWS_REGION || 'us-east-1',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
+
+
+
 // --- メイン処理 ---
 
 async function main() {
@@ -64,6 +88,7 @@ async function main() {
         console.log(`\n[${city.name}] の周辺の飲食店を検索します...`);
         await crawlCity(city);
     }
+
 
     console.log("\nすべての処理が完了しました。");
 }
@@ -118,8 +143,13 @@ async function crawlCity(city: { name: string; location: { lat: number; lng: num
                         key: GOOGLE_PLACES_API_KEY!,
                     },
                 });
-
+                
+                const rawTemplate = loadPrompt('extractKeywords.txt');
                 const details = detailsResponse.data.result;
+                const shop_info = details.editorial_summary?.overview ?? '' + place.name;
+                const prompt = rawTemplate.replace('{{TEXT}}', shop_info);  // inputText: 対象文章
+                await extractKeywords(prompt, place.place_id);
+                await new Promise(resolve => setTimeout(resolve, 10000));
                 const priceInfo = convertPriceLevel(details.price_level);
 
                 const restaurantData = {
@@ -173,3 +203,86 @@ async function crawlCity(city: { name: string; location: { lat: number; lng: num
 main().catch(error => {
     console.error("クローラーの実行中に予期せぬエラーが発生しました:", error);
 });
+
+async function extractKeywords(text: string, restaurantId: string): Promise<string[]> {
+
+  const body = {
+    anthropic_version: 'bedrock-2023-05-31',
+    max_tokens: 1000,
+    messages: [{ role: 'user', content: text }],
+  };
+
+  const command = new InvokeModelCommand({
+    modelId: CLAUDE_MODEL_ID,
+    body: JSON.stringify(body),
+    contentType: 'application/json',
+    accept: 'application/json',
+  });
+
+  try {
+    const response = await bedrock_client.send(command);
+    const responseBody = new TextDecoder().decode(response.body);
+    const parsed = JSON.parse(responseBody);
+    console.log(parsed);
+
+    const rawText = parsed.content?.[0]?.text?.trim();
+    if (!rawText) throw new Error("Claudeからの応答が空です");
+
+    // ```json ... ``` を削除してパース
+    const cleaned = rawText.replace(/^```json\s*|\s*```$/g, '');
+    const keywords: string[] = JSON.parse(cleaned);
+
+    // 🔁 各キーワードごとに保存＋リレーション
+    for (const keyword of keywords) {
+      await saveKeywordIfNotExists(keyword, restaurantId, client);
+    }
+
+    return keywords || [];
+  } catch (e: any) {
+    console.error("❌ エラー:", e.message);
+    throw e;
+  }
+}
+
+async function saveKeywordIfNotExists(keyword: string, restaurantId: string, client: ReturnType<typeof generateClient<Schema>>) {
+  try {
+    // 既存のキーワードを確認
+    const { data: existingKeywords } = await client.models.Keyword.list({
+      filter: { keyword: { eq: keyword } }
+    });
+
+    let keywordRecord = existingKeywords[0];
+
+    // キーワードが存在しなければ作成
+    if (!keywordRecord) {
+      const { data: newKeyword, errors } = await client.models.Keyword.create({ keyword });
+      if (errors) {
+        console.error(`❌ キーワード [${keyword}] の作成に失敗:`, errors);
+        return;
+      }
+      keywordRecord = newKeyword!;
+    }
+
+    // キーワードとレストランのリレーションが存在するか確認
+    const { data: existingRel } = await client.models.KeywordRestaurant.list({
+      filter: {
+        keywordId: { eq: keywordRecord.id },
+        restaurantId: { eq: restaurantId },
+      }
+    });
+
+    // リレーションがなければ作成
+    if (existingRel.length === 0) {
+      const { errors } = await client.models.KeywordRestaurant.create({
+        keywordId: keywordRecord.id,
+        restaurantId: restaurantId,
+      });
+      if (errors) {
+        console.error(`❌ リレーション作成に失敗 (${keywordRecord.keyword} ⇔ ${restaurantId}):`, errors);
+      }
+    }
+
+  } catch (e: any) {
+    console.error(`❌ saveKeywordIfNotExists エラー:`, e.message);
+  }
+}

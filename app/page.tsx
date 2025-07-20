@@ -15,6 +15,37 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  //キーワード抽出
+  const [input, setInput] = useState('');
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const handleExtract = async () => {
+    setLoading(true);
+
+    const response = await fetch('/api/invoke', {
+      method: 'POST',
+      body: JSON.stringify({
+        prompt: `以下の文章から重要なキーワードを5〜10個抽出してください。\n\n出力形式: {"keywords": ["..."]}\n\n文章:\n${input}`,
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const json = await response.json();
+    console.log("invoke response", json); // ←これを追加
+
+    try {
+      const parsed = JSON.parse(json.result);
+      setKeywords(parsed.keywords || []);
+    } catch (e) {
+      console.error('JSONパース失敗:', json.result);
+    }
+
+    setLoading(false);
+  };
+
+
   const handleSearch = async (query: string) => {
     setIsLoading(true);
     setError(null);
@@ -84,6 +115,100 @@ export default function Home() {
           レストラン一覧を見る
         </Link>
       </div>
+      <div className="mt-12 p-4  bg-green-600 rounded-lg shadow">
+         <h1 className="text-2xl font-bold mb-4">🔍 キーワード抽出（Claude）</h1>
+      <textarea
+        className="w-full border p-2 rounded"
+        rows={5}
+        placeholder="文章を入力してください"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+      />
+      <button
+        className="mt-3 px-4 py-2 bg-blue-600 text-white rounded"
+        onClick={handleExtract}
+        disabled={loading}
+      >
+        {loading ? '抽出中...' : '抽出する'}
+      </button>
+
+      {keywords.length > 0 && (
+        <ul className="mt-4 list-disc pl-6">
+          {keywords.map((kw, idx) => (
+            <li key={idx}>{kw}</li>
+          ))}
+        </ul>
+        )}
+        </div>
     </div>
   );
 }
+
+
+// // app/page.tsx（例）
+// // app/page.tsx（例）
+// // 渋谷で安くておしゃれな居酒屋を探しています。個室があって、女性にも人気な店が理想です。
+
+// // 'use client';
+
+// // import { useState } from 'react';
+// import 'dotenv/config';
+
+// // export default function Home() {
+//   const [input, setInput] = useState('');
+//   const [keywords, setKeywords] = useState<string[]>([]);
+//   const [loading, setLoading] = useState(false);
+
+//   const handleExtract = async () => {
+//     setLoading(true);
+
+//     const response = await fetch('/api/invoke', {
+//       method: 'POST',
+//       body: JSON.stringify({
+//         prompt: `以下の文章から重要なキーワードを5〜10個抽出してください。\n\n出力形式: {"keywords": ["..."]}\n\n文章:\n${input}`,
+//       }),
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//     });
+
+//     const json = await response.json();
+
+//     try {
+//       const parsed = JSON.parse(json.result);
+//       setKeywords(parsed.keywords || []);
+//     } catch (e) {
+//       console.error('JSONパース失敗:', json.result);
+//     }
+
+//     setLoading(false);
+//   };
+
+//   return (
+//     <main className="p-4 max-w-xl mx-auto">
+//       <h1 className="text-2xl font-bold mb-4">🔍 キーワード抽出（Claude）</h1>
+//       <textarea
+//         className="w-full border p-2 rounded"
+//         rows={5}
+//         placeholder="文章を入力してください"
+//         value={input}
+//         onChange={(e) => setInput(e.target.value)}
+//       />
+//       <button
+//         className="mt-3 px-4 py-2 bg-blue-600 text-white rounded"
+//         onClick={handleExtract}
+//         disabled={loading}
+//       >
+//         {loading ? '抽出中...' : '抽出する'}
+//       </button>
+
+//       {keywords.length > 0 && (
+//         <ul className="mt-4 list-disc pl-6">
+//           {keywords.map((kw, idx) => (
+//             <li key={idx}>{kw}</li>
+//           ))}
+//         </ul>
+//       )}
+//     </main>
+//   );
+// }

@@ -5,39 +5,7 @@
 /**
  * LLM_A
  */
-export const llmAPrompt = `あなたはレストラン検索条件を抽出する専門システムです。
-
-ユーザーの質問から以下のフィールドに該当する情報を抽出し、必ず有効なJSONで返してください：
-
-{
-  "id": "",
-  "name": "",
-  "description": "",
-  "address": "",
-  "area": "",
-  "latitude": null,
-  "longitude": null,
-  "cuisine": [],
-  "priceMin": null,
-  "priceMax": null,
-  "priceCategory": "",
-  "openingHours": null,
-  "ratingAverage": null,
-  "ratingCount": null,
-  "images": []
-}
-
-重要なルール：
-1. 必ず上記の構造のJSONで返す
-2. 情報がない場合はnullまたは空文字""または空配列[]を使用
-3. 数値フィールドは数値またはnull（文字列にしない）
-4. 配列フィールドは文字列の配列または空配列[]
-5. JSON以外の文字は一切出力しない
-6. すべてのフィールドを含める（省略しない）
-
-例：
-質問: "渋谷で寿司3000円以下"
-回答: {"id":"","name":"","description":"","address":"","area":"渋谷","latitude":null,"longitude":null,"cuisine":["寿司"],"priceMin":null,"priceMax":3000,"priceCategory":"","openingHours":null,"ratingAverage":null,"ratingCount":null,"images":[]}`;
+export const llmAPrompt = "あなたはレストラン検索条件を抽出する専門システムです。\\n\\nユーザーの質問から以下のフィールドに該当する情報を抽出し、必ず有効なJSONで返してください：\\n\\n{\\n  \\\"id\\\": \\\"\\\",\\n  \\\"name\\\": \\\"\\\",\\n  \\\"description\\\": \\\"\\\",\\n  \\\"address\\\": \\\"\\\",\\n  \\\"area\\\": \\\"\\\",\\n  \\\"latitude\\\": null,\\n  \\\"longitude\\\": null,\\n  \\\"cuisine\\\": [],\\n  \\\"priceMin\\\": null,\\n  \\\"priceMax\\\": null,\\n  \\\"priceCategory\\\": \\\"\\\",\\n  \\\"openingHours\\\": null,\\n  \\\"ratingAverage\\\": null,\\n  \\\"ratingCount\\\": null,\\n  \\\"images\\\": []\\n}\\n\\n重要なルール：\\n1. 必ず上記の構造のJSONで返す\\n2. 情報がない場合はnullまたは空文字\\\"\\\"または空配列[]を使用\\n3. 数値フィールドは数値またはnull（文字列にしない）\\n4. 配列フィールドは文字列の配列または空配列[]\\n5. JSON以外の文字は一切出力しない\\n6. すべてのフィールドを含める（省略しない）\\n\\n例：\\n質問: \\\"渋谷で寿司3000円以下\\\"\\n回答: {\\\"id\\\":\\\"\\\",\\\"name\\\":\\\"\\\",\\\"description\\\":\\\"\\\",\\\"address\\\":\\\"\\\",\\\"area\\\":\\\"渋谷\\\",\\\"latitude\\\":null,\\\"longitude\\\":null,\\\"cuisine\\\":[\\\"寿司\\\"],\\\"priceMin\\\":null,\\\"priceMax\\\":3000,\\\"priceCategory\\\":\\\"\\\",\\\"openingHours\\\":null,\\\"ratingAverage\\\":null,\\\"ratingCount\\\":null,\\\"images\\\":[]}";
 
 /**
  * LLM_B
@@ -47,11 +15,4 @@ export const llmBPrompt = "あなたはキーワード抽出の専門家です�
 /**
  * LLM_C
  */
-export const llmCPrompt = `あなたはレストラン推薦の専門家です。ユーザーの質問に対してフレンドリーな推薦文を作成してください。
-
-ルール:
-1. 必ずプレーンテキストで回答
-2. 親しみやすい口調を使用
-3. 具体的な推薦理由を含める
-
-推薦文のみを返してください。`;
+export const llmCPrompt = "あなたはレストラン推薦の専門家です。ユーザーの質問に対してフレンドリーな推薦文を作成してください。\\n\\nルール:\\n1. 必ずプレーンテキストで回答\\n2. 親しみやすい口調を使用\\n3. 具体的な推薦理由を含める\\n\\n推薦文のみを返してください。";
